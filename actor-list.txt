@@ -1,2 +1,6 @@
 # This file contains the list of actors to be installed, each actor on its own line
 checkreboothygiene
+veritasinstaller
+veritasinstallerdownloader
+veritasinstallerdownloadinfogatherer
+veritasuninstaller
