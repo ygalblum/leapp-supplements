@@ -49,22 +49,23 @@ class VeritasInstallerDownloadInfoGatherer(Actor):
         self.log.info("Checking if Veritas infoscale is installed")
         if has_package(InstalledRPM, 'VRTSpython'):
             answers = self.get_answers(self.dialogs[0])
-            self.produce(
-                VeritasInstallerDownloadInfo(
-                    installer_tar_url=answers.get('installer'),
-                    install_response_file_url=answers.get('installer_response'),
-                    uninstall_response_file_url=answers.get('uninstaller_response'),
+            if answers:
+                self.produce(
+                    VeritasInstallerDownloadInfo(
+                        installer_tar_url=answers.get('installer'),
+                        install_response_file_url=answers.get('installer_response'),
+                        uninstall_response_file_url=answers.get('uninstaller_response'),
+                    )
                 )
-            )
-            reporting.create_report([
-                reporting.Title('An installation of Veritas Infoscale was found'),
-                reporting.Summary(
-                    'Veritas Infoscale does not support upgrading from RHEL7 to RHEL8. '
-                    'Instead, the configuration of the current deployment will be stored, '
-                    'and Infoscale will be removed before the upgrade. '
-                    'Once the upgrade is complete, Infoscale will be re-installed '
-                    'and the configuration will be restored'
-                ),
-                reporting.Severity(reporting.Severity.INFO),
-                reporting.Groups([reporting.Groups.HIGH_AVAILABILITY]),
-            ])
+                reporting.create_report([
+                    reporting.Title('An installation of Veritas Infoscale was found'),
+                    reporting.Summary(
+                        'Veritas Infoscale does not support upgrading from RHEL7 to RHEL8. '
+                        'Instead, the configuration of the current deployment will be stored, '
+                        'and Infoscale will be removed before the upgrade. '
+                        'Once the upgrade is complete, Infoscale will be re-installed '
+                        'and the configuration will be restored'
+                    ),
+                    reporting.Severity(reporting.Severity.INFO),
+                    reporting.Groups([reporting.Groups.HIGH_AVAILABILITY]),
+                ])
