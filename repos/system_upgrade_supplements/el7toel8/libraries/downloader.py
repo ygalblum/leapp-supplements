@@ -22,3 +22,9 @@ class Downloader(object):
             if fname:
                 return fname[0]
         return default_filename
+
+    @staticmethod
+    def get(url):
+        r = requests.get(url, allow_redirects=True, timeout=10)
+        r.raise_for_status()
+        return r.content

@@ -1,4 +1,5 @@
-from leapp.models import InstalledRPM, RPM, VeritasInstallerDownloadInfo
+from leapp.libraries.actor import veritasinstallerdownloadinfogatherer
+from leapp.models import InstalledRPM, RPM, VeritasInstallerDownloadInfo, VeritasInstallerPatchDownloadInfo
 from leapp.reporting import Report
 
 
@@ -26,31 +27,41 @@ def test_actor_with_veritas_python_package(monkeypatch, current_actor_context):
                 stream=None)
             ]
 
-    installer_location = "http://www.example.com/download/installer"
-    uninstall_response_location = "http://www.example.com/download/uninstall.response"
-    install_response_location = "http://www.example.com/download/install.response"
-
-    def mocked_input(title):
-        if 'TGZ' in title:
-            return installer_location
-        if 'when uninstalling' in title:
-            return uninstall_response_location
-        if 'when installing' in title:
-            return install_response_location
-        return ""
+    def mocked_input(_title):
+        return "http://example.com/info.json"
 
     monkeypatch.setattr('leapp.dialogs.renderer.input', mocked_input)
 
-    current_actor_context.feed(InstalledRPM(items=with_veritas))
-    current_actor_context.run()
-    assert current_actor_context.consume(Report)
-    download_info = current_actor_context.consume(VeritasInstallerDownloadInfo)
-    assert download_info
-    download_info = download_info[0]
+    ga_installer_path = "http://example.com/ga_installer.tgz"
+    install_response_path = "http://example.com/install.response"
+    uninstall_response_path = "http://example.com/uninstall.response"
+    patches = [
+        {
+            "url": "http://example.com/patch_{index}/installer.tgz".format(index=i),
+            "response_file": "http://example.com/patch_{index}/patch.response".format(index=i),
+        } for i in range(3)
+    ]
+    expected_installer_download_info = VeritasInstallerDownloadInfo(
+        installer_tar_url=ga_installer_path,
+        install_response_file_url=install_response_path,
+        uninstall_response_file_url=uninstall_response_path,
+        patches=[VeritasInstallerPatchDownloadInfo(url=p['url'], response_file=p['response_file']) for p in patches],
+    )
+    monkeypatch.setattr(
+        veritasinstallerdownloadinfogatherer,
+        "process",
+        lambda _x, _y: expected_installer_download_info
+    )
 
-    assert download_info.installer_tar_url == installer_location
-    assert download_info.install_response_file_url == install_response_location
-    assert download_info.uninstall_response_file_url == uninstall_response_location
+    current_actor_context.feed(InstalledRPM(items=with_veritas))
+
+    current_actor_context.run()
+
+    assert current_actor_context.consume(Report)
+    installer_download_info = current_actor_context.consume(VeritasInstallerDownloadInfo)
+    assert installer_download_info
+    installer_download_info = installer_download_info[0]
+    assert installer_download_info == expected_installer_download_info
 
 
 def test_actor_without_veritas_python_package(current_actor_context):
