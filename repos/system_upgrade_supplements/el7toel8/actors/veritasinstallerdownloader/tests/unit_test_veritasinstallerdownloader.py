@@ -3,7 +3,7 @@ import mock
 
 from leapp.libraries.actor import veritasinstallerdownloader
 from leapp.libraries.common import downloader
-from leapp.models import VeritasInstallerDownloadInfo, VeritasInstallerInfo
+from leapp.models import VeritasInstallerDownloadInfo, VeritasInstallerPatchDownloadInfo, VeritasInstallerInfo
 
 
 installer_location = "http://www.example.com/download/installer"
@@ -27,6 +27,7 @@ def test_veritas_installer_downloader_library(monkeypatch):
         installer_tar_url=installer_location,
         install_response_file_url=install_response_location,
         uninstall_response_file_url=uninstall_response_location
+        patches=[VeritasInstallerPatchDownloadInfo(url="", response_file="")]
     )
     downloader_mock = mock.MagicMock(name='downloader', spec=downloader.Downloader)
     downloader_mock.download = mock.MagicMock(
